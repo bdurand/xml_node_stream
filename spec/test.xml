@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<library>
+  <?library-info version="2.0" ignore="yes" ?>
+  <!-- Authors -->
+  <authors>
+    <author id="1">
+      <name>Edward Gibbon</name>
+    </author>
+    <author id="2">
+      <name>Herman Melville</name>
+    </author>
+    <author id="3">
+      <name>Jack London</name>
+    </author>
+  </authors>
+  <!-- Books -->
+  <collection>
+    <section id="100" name="History">
+      <book id="1">
+        <title>
+          The Decline &amp; Fall of the Roman Empire
+        </title>
+        <author id="1"/>
+        <abstract><![CDATA[History of the fall of Rome.]]></abstract>
+        <volumes>6</volumes>
+      </book>
+    </section>
+    <section id="200" name="Fiction">
+      <book id="2">
+        <title>
+          Call of the Wild
+        </title>
+        <author id="3"/>
+        <abstract><![CDATA[
+          A dog goes to Alaska.
+        ]]></abstract>
+      </book>
+      <book id="3">
+        <title>
+          White Fang
+        </title>
+        <author id="3"/>
+        <abstract><![CDATA[Dogs, wolves, etc.]]></abstract>
+      </book>
+      <book id="4">
+        <title>
+          Moby Dick
+        </title>
+        <alternate_title>
+          The Whale
+        </alternate_title>
+        <author id="2"/>
+        <abstract><![CDATA[A mad captain seeks a mysterious white whale.]]></abstract>
+      </book>
+    </section>
+  </collection>
+</library>
