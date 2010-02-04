@@ -16,7 +16,7 @@ desc 'Generate documentation for xml_node_stream.'
 Rake::RDocTask.new(:rdoc) do |rdoc|
   rdoc.rdoc_dir = 'rdoc'
   rdoc.options << '--title' << 'XML Node Stream' << '--line-numbers' << '--inline-source' << '--main' << 'README.rdoc'
-  rdoc.rdoc_files.include('README')
+  rdoc.rdoc_files.include('README.rdoc')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
 
@@ -31,7 +31,3 @@ Jeweler::Tasks.new do |gem|
 end
 
 Jeweler::GemcutterTasks.new
- 
-Rake::GemPackageTask.new(spec) do |pkg| 
-  pkg.need_tar = true 
-end

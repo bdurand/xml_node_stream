@@ -14,39 +14,39 @@ In order to keep the interface simple and universal, only XML elements and text 
 
 Suppose we have file with every book in the world in it:
 
-<books>
-  <book isbn="123456">
-    <title>Moby Dick</title>
-    <author>Herman Melville</author>
-    <categories>
-      <category>Fiction</category>
-      <category>Adventure</category>
-    </categories>
-  </book>
-  <book isbn="98765643">
-    <title>The Decline and Fall of the Roman Empire</title>
-    <author>Edward Gibbon</author>
-    <category>
-      <category>History</category>
-      <category>Ancient</category>
-    </categories>
-  </book>
-  ...
-</books>
+  <books>
+    <book isbn="123456">
+      <title>Moby Dick</title>
+      <author>Herman Melville</author>
+      <categories>
+        <category>Fiction</category>
+        <category>Adventure</category>
+      </categories>
+    </book>
+    <book isbn="98765643">
+      <title>The Decline and Fall of the Roman Empire</title>
+      <author>Edward Gibbon</author>
+      <category>
+        <category>History</category>
+        <category>Ancient</category>
+      </categories>
+    </book>
+    ...
+  </books>
 
 And we want to get them into our Books data model:
 
-XmlNodeStream.parse('/tmp/books.xml') do |node|
-  if node.path == '/books/book'
-    book = Book.new
-    book.isbn = node['isbn']
-    book.title = node.find('title').value
-    book.author = node.find('author/text()')
-    book.categories = node.select('categories/category/text()')
-    book.save
-    node.release!
+  XmlNodeStream.parse('/tmp/books.xml') do |node|
+    if node.path == '/books/book'
+      book = Book.new
+      book.isbn = node['isbn']
+      book.title = node.find('title').value
+      book.author = node.find('author/text()')
+      book.categories = node.select('categories/category/text()')
+      book.save
+      node.release!
+    end
   end
-end
 
 == Releasing Nodes
 
