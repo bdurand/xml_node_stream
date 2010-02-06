@@ -21,13 +21,13 @@ Rake::RDocTask.new(:rdoc) do |rdoc|
 end
 
 Jeweler::Tasks.new do |gem|
-  gem.name        = "xml_node_stream"
-  gem.summary     = %Q{Simple XML parser wrapper that provides the benefits of stream parsing with the ease of using document nodes.}
-  gem.email       = "brian@embellishedvisions.com"
-  gem.homepage    = "http://github.com/bdurand/xml_node_stream"
-  gem.authors     = ["Brian Durand"]
-  
+  gem.name = "xml_node_stream"
+  gem.summary = %Q{Simple XML parser wrapper that provides the benefits of stream parsing with the ease of using document nodes.}
+  gem.email = "brian@embellishedvisions.com"
+  gem.homepage = "http://github.com/bdurand/xml_node_stream"
+  gem.authors = ["Brian Durand"]
   gem.add_development_dependency('rspec', '>= 1.2.9')
+  gem.add_development_dependency('jeweler')
 end
 
 Jeweler::GemcutterTasks.new
