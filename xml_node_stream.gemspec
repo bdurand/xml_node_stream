@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Brian Durand"]
-  s.date = %q{2010-02-06}
+  s.date = %q{2010-02-07}
   s.email = %q{brian@embellishedvisions.com}
   s.extra_rdoc_files = [
     "README.rdoc"
@@ -33,7 +33,8 @@ Gem::Specification.new do |s|
      "spec/selector_spec.rb",
      "spec/spec_helper.rb",
      "spec/test.xml",
-     "spec/xml_node_stream_spec.rb"
+     "spec/xml_node_stream_spec.rb",
+     "xml_node_stream.gemspec"
   ]
   s.homepage = %q{http://github.com/bdurand/xml_node_stream}
   s.rdoc_options = ["--charset=UTF-8"]
