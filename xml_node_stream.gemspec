@@ -5,21 +5,18 @@
 
 Gem::Specification.new do |s|
   s.name = %q{xml_node_stream}
-  s.version = "1.0.0"
+  s.version = "1.0.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Brian Durand"]
-  s.date = %q{2010-02-07}
+  s.date = %q{2010-03-17}
   s.email = %q{brian@embellishedvisions.com}
   s.extra_rdoc_files = [
     "README.rdoc"
   ]
   s.files = [
-    "MIT_LICENSE",
-     "README.rdoc",
+    "README.rdoc",
      "Rakefile",
-     "VERSION",
-     "init.rb",
      "lib/xml_node_stream.rb",
      "lib/xml_node_stream/node.rb",
      "lib/xml_node_stream/parser.rb",
@@ -33,8 +30,7 @@ Gem::Specification.new do |s|
      "spec/selector_spec.rb",
      "spec/spec_helper.rb",
      "spec/test.xml",
-     "spec/xml_node_stream_spec.rb",
-     "xml_node_stream.gemspec"
+     "spec/xml_node_stream_spec.rb"
   ]
   s.homepage = %q{http://github.com/bdurand/xml_node_stream}
   s.rdoc_options = ["--charset=UTF-8"]

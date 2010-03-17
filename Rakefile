@@ -12,7 +12,7 @@ begin
     t.spec_files = 'spec/**/*_spec.rb'
   end
 rescue LoadError
-  tast :test do
+  task :test do
     STDERR.puts "You must have rspec >= 1.2.9 to run the tests"
   end
 end
@@ -33,6 +33,9 @@ begin
     gem.email = "brian@embellishedvisions.com"
     gem.homepage = "http://github.com/bdurand/xml_node_stream"
     gem.authors = ["Brian Durand"]
+    gem.files = FileList["lib/**/*", "spec/**/*", "README.rdoc", "Rakefile"].to_a
+    gem.has_rdoc = true
+    gem.extra_rdoc_files = ["README.rdoc"]
     gem.add_development_dependency('rspec', '>= 1.2.9')
     gem.add_development_dependency('jeweler')
   end
