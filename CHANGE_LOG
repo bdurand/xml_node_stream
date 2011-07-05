@@ -1,5 +1,8 @@
-1.0.0
-  - Initial release
+1.0.2
+  - Update to work with latest versions of Nokogiri and LibXML
 
 1.0.1
   - Fixes to Rakefile so it loads without rspec
+
+1.0.0
+  - Initial release

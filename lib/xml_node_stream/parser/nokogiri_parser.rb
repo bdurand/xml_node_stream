@@ -20,7 +20,15 @@ begin
           
           def start_element (name, attributes = [])
             attributes_hash = {}
-            (attributes.size / 2).times{|i| attributes_hash[attributes[i * 2]] = attributes[(i * 2) + 1]}
+            if attributes.first.is_a?(Array)
+              # Newer style where attributes are passed as an array of arrays
+              attributes.each do |k, v|
+                attributes_hash[k] = v
+              end
+            else
+              # Old style where attributes are passed as a flat array
+              (attributes.size / 2).times{|i| attributes_hash[attributes[i * 2]] = attributes[(i * 2) + 1]}
+            end
             @parser.do_start_element(name, attributes_hash)
           end
 

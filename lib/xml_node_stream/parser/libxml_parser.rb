@@ -9,9 +9,9 @@ begin
         include Base
 
         def parse_stream (io)
-          parser = LibXML::XML::SaxParser.new
+          context = LibXML::XML::Parser::Context.io(io)
+          parser = LibXML::XML::SaxParser.new(context)
           parser.callbacks = self
-          parser.io = io
           parser.parse
         end
     
