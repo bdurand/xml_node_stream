@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module XmlNodeStream
   # Partial implementation of XPath selectors. Only abbreviated paths and the text() function are supported. The rest of XPath
   # is unecessary in the context of a Ruby application since XPath is also a programming language. If you really need an XPath
@@ -14,58 +16,87 @@ module XmlNodeStream
   # * author/text() - get the text values of all author child elements
   class Selector
     # Create a selector. Path should be an abbreviated XPath string.
-    def initialize (path)
+    #
+    # @param path [String] the XPath selector string
+    def initialize(path)
       @parts = []
-      path.gsub('//', '/%/').split('/').each do |part_path|
+      # Handle // specially - instead of splitting into % and name, combine them
+      path = path.gsub(/\/\/(\w+)/, '/%\1/')  # .//name becomes /%name/
+      path = path.gsub("//", "/%/")           # // without name becomes /%/
+
+      path.split("/").each do |part_path|
         part_matchers = []
         @parts << part_matchers
-        or_paths = part_path.split('|')
+        or_paths = part_path.split("|")
         or_paths << "" if or_paths.empty?
         or_paths.each do |matcher_path|
           part_matchers << Matcher.new(matcher_path)
         end
       end
     end
-    
+
     # Apply the selector to the current node. Note, if your path started with a /, it will be applied
     # to the root node.
-    def find (node)
+    #
+    # @param node [Node] the node to apply the selector to
+    # @return [Array<Node>] the matching nodes
+    def find(node)
       matched = [node]
       @parts.each do |part_matchers|
         context = matched
         matched = []
+
         part_matchers.each do |matcher|
           matched.concat(matcher.select(context))
         end
+
         break if matched.empty?
       end
-      return matched
+      matched
     end
-    
+
     # Match a partial path to a node.
     class Matcher
-      def initialize (path)
-        case path
-        when 'text()'
-          @extractor = lambda{|node| node.value}
-        when '%'
-          @extractor = lambda{|node| node.descendants}
-        when '*'
-          @extractor = lambda{|node| node.children}
-        when '.'
-          @extractor = lambda{|node| node}
-        when '..'
-          @extractor = lambda{|node| node.parent ? node.parent : []}
-        when ''
-          @extractor = lambda{|node| root = Node.new(nil); root.children << node.root; root}
+      # Create a new Matcher.
+      #
+      # @param path [String] the path pattern to match
+      def initialize(path)
+        @path = path
+        @extractor = case path
+        when "text()"
+          lambda { |node, context_nodes = []| node.value unless node.value.nil? || node.value.empty? }
+        when "%"
+          lambda { |node, context_nodes = []| node.descendants }
+        when "*"
+          lambda { |node, context_nodes = []| node.children }
+        when "."
+          lambda { |node, context_nodes = []| node }
+        when ".."
+          lambda { |node, context_nodes = []| node.parent || [] }
+        when ""
+          lambda { |node, context_nodes = []|
+            root = Node.new(nil)
+            root.children << node.root
+            root
+          }
+        when /^%(.+)$/  # descendants with name filter: %name
+          name = $1
+          lambda { |node, context_nodes = []| node.descendants.select { |d| d.name == name } }
         else
-          @extractor = lambda{|node| node.children.select{|child| child.name == path}}
+          lambda { |node, context_nodes = []|
+            # Only return children matching the name
+            # Don't include children that are already in the context
+            node.children.select { |child| child.name == @path && !context_nodes.include?(child) }
+          }
         end
       end
-      
+
       # Select all nodes that match a partial path.
-      def select (context_nodes)
-        context_nodes.collect{|node| @extractor.call(node) if node.is_a?(Node)}.flatten
+      #
+      # @param context_nodes [Array<Node>] the nodes to select from
+      # @return [Array<Node>] the matching nodes
+      def select(context_nodes)
+        context_nodes.collect { |node| @extractor.call(node, context_nodes) if node.is_a?(Node) }.flatten.compact.uniq
       end
     end
   end
