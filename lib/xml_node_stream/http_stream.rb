@@ -5,13 +5,21 @@ require "net/http"
 module XmlNodeStream
   # IO-like wrapper for HTTP responses that allows streaming
   class HttpStream
+    # Default timeout values in seconds
+    DEFAULT_OPEN_TIMEOUT = 10
+    DEFAULT_READ_TIMEOUT = 60
+
     # Create a new HttpStream.
     #
     # @param uri [URI] the URI to stream from
-    def initialize(uri)
+    # @param open_timeout [Integer] connection timeout in seconds (default 10)
+    # @param read_timeout [Integer] read timeout in seconds (default 60)
+    def initialize(uri, open_timeout: DEFAULT_OPEN_TIMEOUT, read_timeout: DEFAULT_READ_TIMEOUT)
       @uri = uri
       @http = Net::HTTP.new(uri.host, uri.port)
       @http.use_ssl = (uri.scheme == "https")
+      @http.open_timeout = open_timeout
+      @http.read_timeout = read_timeout
       @request = Net::HTTP::Get.new(uri.request_uri)
       @buffer = +""
       @eof = false
@@ -118,6 +126,9 @@ module XmlNodeStream
     # @return [void]
     def close
       @http.finish if @http&.started?
+    rescue
+      # Ignore errors during close to ensure cleanup completes
+      nil
     end
 
     # Check if the stream is closed.

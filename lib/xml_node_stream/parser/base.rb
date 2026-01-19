@@ -22,7 +22,14 @@ module XmlNodeStream
       # @return [void]
       # @raise [NotImplementedError] if the parser gem is not loaded
       def parse_stream(io)
-        raise NotImplementedError.new("could not load gem")
+        parser_name = self.class.name.split("::").last.sub("Parser", "").downcase
+        gem_name = case parser_name
+        when "nokogiri" then "nokogiri"
+        when "libxml" then "libxml-ruby"
+        when "rexml" then "rexml"
+        else "unknown"
+        end
+        raise NotImplementedError.new("Parser gem not loaded: #{gem_name}. Install it with: gem install #{gem_name.split(" ").first}")
       end
 
       # Handle start element event.

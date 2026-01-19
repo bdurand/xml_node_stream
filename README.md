@@ -4,7 +4,7 @@
 [![Ruby Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://github.com/testdouble/standard)
 [![Gem Version](https://badge.fury.io/rb/xml_node_stream.svg)](https://badge.fury.io/rb/xml_node_stream)
 
-This gem provides a very easy to use XML parser the provides the benefits of both stream parsing (i.e. SAX) and document parsing (i.e. DOM). In addition, it provides a unified parsing language for each of the major Ruby XML parsers (REXML, Nokogiri, and LibXML) so that your code doesn't have to be bound to a particular XML library.
+This gem provides a very easy to use XML parser that provides the benefits of both stream parsing (i.e. SAX) and document parsing (i.e. DOM). In addition, it provides a unified parsing language for each of the major Ruby XML parsers (REXML, Nokogiri, and LibXML) so that your code doesn't have to be bound to a particular XML library.
 
 ## Usage
 
@@ -31,7 +31,7 @@ Suppose we have file with every book in the world in it:
   <book isbn="98765643">
     <title>The Decline and Fall of the Roman Empire</title>
     <author>Edward Gibbon</author>
-    <category>
+    <categories>
       <category>History</category>
       <category>Ancient</category>
     </categories>
@@ -66,7 +66,7 @@ A sample 77Mb XML document parsed into Nokogiri consumes over 800Mb of memory. P
 
 ### XPath
 
-You can use a subset of the XPath language to navigate nodes. The only parts of XPath implemented are the paths themselves and the text() function. The text() function is useful for getting the value of node directly from the find or select methods without having to do a nil check on the nodes. For instance, in the above example we can get the name of an author with node.find('author/text()') instead of node.find('author').value if node.find('author').
+You can use a subset of the XPath language to navigate nodes. The only parts of XPath implemented are the paths themselves and the text() function. The text() function is useful for getting the value of a node directly from the find or select methods without having to do a nil check on the nodes. For instance, in the above example we can get the name of an author with `node.find('author/text()')` instead of `node.find('author')&.value` or checking if the node exists before accessing its value.
 
 The rest of the XPath language is not implemented since it is a programming language and there is really no need for it since we already have Ruby at our disposal which is far more powerful than XPath. See the Selector class for details.
 
@@ -90,7 +90,7 @@ $ gem install xml_node_stream
 
 ## Contributing
 
-Open a pull request on [GitHub](https://github.com/bdurand/base_gem).
+Open a pull request on [GitHub](https://github.com/bdurand/xml_node_stream).
 
 Please use the [standardrb](https://github.com/testdouble/standard) syntax and lint your code with `standardrb --fix` before submitting.
 

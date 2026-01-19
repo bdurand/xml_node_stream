@@ -68,4 +68,13 @@ RSpec.describe XmlNodeStream::Selector do
     expect(selector.find(root)).to eq([child_1, child_2])
     expect(selector.find(grandchild_1)).to eq([child_1, child_2])
   end
+
+  it "should reject invalid XPath patterns" do
+    expect { XmlNodeStream::Selector.new("") }.to raise_error(ArgumentError, /cannot be empty/)
+    expect { XmlNodeStream::Selector.new(nil) }.to raise_error(ArgumentError, /cannot be empty/)
+    expect { XmlNodeStream::Selector.new("child//") }.to raise_error(ArgumentError, /Invalid XPath pattern/)
+    expect { XmlNodeStream::Selector.new("child///grandchild") }.to raise_error(ArgumentError, /Invalid XPath pattern/)
+    expect { XmlNodeStream::Selector.new("child@attr") }.to raise_error(ArgumentError, /Invalid XPath pattern/)
+    expect { XmlNodeStream::Selector.new("child[1]") }.to raise_error(ArgumentError, /Invalid XPath pattern/)
+  end
 end

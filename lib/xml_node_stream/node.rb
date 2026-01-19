@@ -18,6 +18,7 @@ module XmlNodeStream
       @parent = parent
       @parent&.add_child(self)
       @value = value
+      @path = nil
     end
 
     # Release a node by removing it from the tree structure so that the Ruby garbage collector can reclaim the memory.
@@ -27,6 +28,7 @@ module XmlNodeStream
     # @return [void]
     def release!
       @parent&.remove_child(self)
+      @path = nil
     end
 
     # Array of the child nodes of the node.
@@ -81,7 +83,6 @@ module XmlNodeStream
       else
         "/#{@name}"
       end
-      @path
     end
 
     # Get the value of the node attribute with the given name.

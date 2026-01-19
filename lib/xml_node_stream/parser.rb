@@ -9,6 +9,8 @@ module XmlNodeStream
   class Parser
     SUPPORTED_PARSERS = [:nokogiri, :libxml, :rexml]
 
+    @parser = :rexml
+
     class << self
       # Set the parser implementation. The parser argument should be one of :nokogiri, :libxml, or :rexml. If this method
       # is not called, it will default to :rexml which is the slowest choice possible. If you set the parser to one of the
@@ -18,8 +20,9 @@ module XmlNodeStream
       # @return [Symbol] the parser name
       # @raise [ArgumentError] if parser is not one of the supported parsers
       def parser_name=(parser)
-        parser_sym = parser.to_sym
+        parser_sym = parser&.to_sym
         raise ArgumentError.new("must be one of #{SUPPORTED_PARSERS.inspect}") unless SUPPORTED_PARSERS.include?(parser_sym)
+
         @parser_name = parser_sym
       end
 
@@ -44,9 +47,15 @@ module XmlNodeStream
         if io.is_a?(String) && io.match?(/<[^>]+>/m)
           io = StringIO.new(io)
         elsif io.is_a?(String)
-          io = File.open(io)
+          unless File.exist?(io)
+            raise ArgumentError.new("File not found: #{io}")
+          end
+          io = File.open(io, "r:UTF-8")
         elsif io.is_a?(Pathname)
-          io = io.open
+          unless io.exist?
+            raise ArgumentError.new("File not found: #{io}")
+          end
+          io = io.open("r:UTF-8")
         elsif io.is_a?(URI)
           io = HttpStream.new(io)
         else
@@ -58,7 +67,14 @@ module XmlNodeStream
           parser.parse_stream(io)
           parser.root
         ensure
-          io.close if close_stream
+          if close_stream
+            begin
+              io.close
+            rescue
+              # Ignore errors during close to ensure cleanup completes
+              nil
+            end
+          end
         end
       end
 
