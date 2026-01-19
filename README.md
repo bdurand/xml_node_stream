@@ -60,7 +60,41 @@ end
 
 ### Releasing Nodes
 
-In the above example, what prevents memory bloat when parsing a large document is the call to node.release!. This call will remove the node from the node tree. The general practice is to look for the higher level nodes you are interested in and then release them immediately. If there are nodes you don't care about at all, those can be released immediately as well.
+In the above example, what prevents memory bloat when parsing a large document is the call to node.release!. This call will remove the node from the node tree. The general practice is to look for the higher level nodes you are interested in and then release them immediately. If there are nodes you don't care about at all, those should be released immediately as well.
+
+For example, if the XML document for the books also contained a large list of authors that we aren't using in our processing, we should still release the author nodes immediately to keep from bloating memory:
+
+```xml
+<library>
+  <authors>
+    <author id="1">
+      <name>Herman Melville</name>
+    </author>
+    <author id="2">
+      <name>Edward Gibbon</name>
+    </author>
+    ...
+  </authors>
+  <books>
+    <book isbn="123456">
+      ...
+    </book>
+    ...
+  </books>
+</library>
+```
+
+```ruby
+XmlNodeStream.parse('/tmp/books.xml') do |node|
+  if node.path == '/library/books/book'
+    process_book(node)
+    node.release!
+  elsif node.path == '/library/authors/author'
+    # we don't care about authors so release the nodes immediately
+    node.release!
+  end
+end
+```
 
 A sample 77Mb XML document parsed into Nokogiri consumes over 800Mb of memory. Parsing the same document with XmlNodeStream and releasing top level nodes as they're processed uses less than 1Mb.
 
@@ -69,6 +103,12 @@ A sample 77Mb XML document parsed into Nokogiri consumes over 800Mb of memory. P
 You can use a subset of the XPath language to navigate nodes. The only parts of XPath implemented are the paths themselves and the text() function. The text() function is useful for getting the value of a node directly from the find or select methods without having to do a nil check on the nodes. For instance, in the above example we can get the name of an author with `node.find('author/text()')` instead of `node.find('author')&.value` or checking if the node exists before accessing its value.
 
 The rest of the XPath language is not implemented since it is a programming language and there is really no need for it since we already have Ruby at our disposal which is far more powerful than XPath. See the Selector class for details.
+
+## Perfomance
+
+The performance of XmlNodeStream depends on which underlying XML parser is used. Generally, the native extension based parsers (Nokogiri and LibXML) will perform much better with out adding the overhead of XmlNodeStream. The pure Ruby REXML parser will perform much better with XmlNodeStream.
+
+The main benefit of XmlNodeStream is memory efficiency when parsing large documents. By releasing nodes as they are processed, memory usage can be kept low even for very large documents. This reduces memory bloat and keeps your application process size consistent regardless of the size of the XML documents being processed which can be important in a long running server process.
 
 ## Installation
 

@@ -20,3 +20,64 @@ require "rspec/core/rake_task"
 RSpec::Core::RakeTask.new(:spec)
 
 task default: :spec
+
+# Benchmark tasks
+
+task benchmark: "benchmark:all"
+
+namespace :benchmark do
+  require_relative "benchmark/benchmark_helper"
+
+  def benchmark_size
+    ENV.fetch("SIZE", "5").to_i
+  end
+
+  desc "Run all benchmarks"
+  task :all do
+    [:nokogiri, :libxml, :rexml].each do |parser|
+      Rake::Task["benchmark:#{parser}"].invoke
+    end
+  end
+
+  [:nokogiri, :libxml, :rexml].each do |parser|
+    desc "Compare streaming vs direct parser with #{parser.capitalize}"
+    task parser do
+      system({"SIZE" => benchmark_size.to_s}, "bundle", "exec", "rake", "benchmark:streaming:#{parser}") || exit(1)
+      system({"SIZE" => benchmark_size.to_s}, "bundle", "exec", "rake", "benchmark:direct:#{parser}") || exit(1)
+    end
+  end
+
+  namespace :streaming do
+    desc "Benchmark streaming parser with Nokogiri"
+    task :nokogiri do
+      Benchmark::StreamingBenchmark.new(:nokogiri, size_mb: benchmark_size).execute
+    end
+
+    desc "Benchmark streaming parser with LibXML"
+    task :libxml do
+      Benchmark::StreamingBenchmark.new(:libxml, size_mb: benchmark_size).execute
+    end
+
+    desc "Benchmark streaming parser with REXML"
+    task :rexml do
+      Benchmark::StreamingBenchmark.new(:rexml, size_mb: benchmark_size).execute
+    end
+  end
+
+  namespace :direct do
+    desc "Benchmark direct parser with Nokogiri"
+    task :nokogiri do
+      Benchmark::DirectBenchmark.new(:nokogiri, size_mb: benchmark_size).execute
+    end
+
+    desc "Benchmark direct parser with LibXML"
+    task :libxml do
+      Benchmark::DirectBenchmark.new(:libxml, size_mb: benchmark_size).execute
+    end
+
+    desc "Benchmark direct parser with REXML"
+    task :rexml do
+      Benchmark::DirectBenchmark.new(:rexml, size_mb: benchmark_size).execute
+    end
+  end
+end

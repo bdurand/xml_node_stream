@@ -4,7 +4,7 @@ Gem::Specification.new do |spec|
   spec.authors = ["Brian Durand"]
   spec.email = ["bbdurand@gmail.com"]
 
-  spec.summary = "Simple XML parser wrapper that provides the benefits of stream parsing with the ease of using document nodes."
+  spec.summary = "Memory-efficient XML parser that reduces memory allocation when parsing large XML documents while maintaining a simple, easy-to-use interface."
 
   spec.homepage = "https://github.com/bdurand/xml_node_stream"
   spec.license = "MIT"
@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
     bin/
     gemfiles/
     spec/
-    test_app/
+    benchmark/
   ]
   spec.files = Dir.chdir(File.expand_path("..", __FILE__)) do
     `git ls-files -z`.split("\x0").reject { |f| ignore_files.any? { |path| f.start_with?(path) } }
