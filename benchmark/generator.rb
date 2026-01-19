@@ -111,7 +111,7 @@ module Benchmark
       20.times do
         abstract << ABSTRACT_WORDS[random.rand(ABSTRACT_WORDS.size)]
       end
-      "This is an exciting #{abstract.join(' ')} that captivates readers."
+      "This is an exciting #{abstract.join(" ")} that captivates readers."
     end
   end
 end

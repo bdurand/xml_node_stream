@@ -8,46 +8,48 @@ require_relative "generator"
 module Benchmark
   # Helper methods for benchmarking
   class Helper
-    # Measure execution time
-    def self.measure
-      start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
-      yield
-      end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    class << self
+      # Measure execution time
+      def measure
+        start_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        yield
+        end_time = Process.clock_gettime(Process::CLOCK_MONOTONIC)
 
-      end_time - start_time
-    end
+        end_time - start_time
+      end
 
-    def self.memory
-      GC.start
-      memory_before = get_process_memory
-      yield
-      GC.start
-      memory_after = get_process_memory
+      def memory
+        GC.start
+        memory_before = get_process_memory
+        yield
+        GC.start
+        memory_after = get_process_memory
 
-      memory_after - memory_before
-    end
+        memory_after - memory_before
+      end
 
-    private
+      private
 
-    def self.get_process_memory
-      # Get process memory (RSS) in MB - includes both Ruby heap and native C allocations
-      if RUBY_PLATFORM =~ /darwin/
-        # macOS - use ps to get RSS in KB
-        `ps -o rss= -p #{Process.pid}`.to_i / 1024.0
-      elsif RUBY_PLATFORM =~ /linux/
-        # Linux - read from /proc
-        status_file = "/proc/#{Process.pid}/status"
-        if File.exist?(status_file)
-          File.read(status_file).match(/VmRSS:\s+(\d+)/)[1].to_i / 1024.0
-        else
-          # Fallback to ps
+      def get_process_memory
+        # Get process memory (RSS) in MB - includes both Ruby heap and native C allocations
+        if RUBY_PLATFORM.match?(/darwin/)
+          # macOS - use ps to get RSS in KB
           `ps -o rss= -p #{Process.pid}`.to_i / 1024.0
+        elsif RUBY_PLATFORM.match?(/linux/)
+          # Linux - read from /proc
+          status_file = "/proc/#{Process.pid}/status"
+          if File.exist?(status_file)
+            File.read(status_file).match(/VmRSS:\s+(\d+)/)[1].to_i / 1024.0
+          else
+            # Fallback to ps
+            `ps -o rss= -p #{Process.pid}`.to_i / 1024.0
+          end
+        else
+          # Fallback using Ruby's GC stats (Ruby heap only)
+          stat = GC.stat
+          slot_size = 40
+          stat[:heap_live_slots] * slot_size / (1024.0 * 1024.0)
         end
-      else
-        # Fallback using Ruby's GC stats (Ruby heap only)
-        stat = GC.stat
-        slot_size = 40
-        stat[:heap_live_slots] * slot_size / (1024.0 * 1024.0)
       end
     end
   end
@@ -69,7 +71,7 @@ module Benchmark
     end
 
     def cleanup
-      @tempfile.unlink if @tempfile
+      @tempfile&.unlink
     end
 
     def run

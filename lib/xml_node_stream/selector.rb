@@ -17,6 +17,8 @@ module XmlNodeStream
   # * /library/books/book - find all book elements with the full path /library/books/book
   # * author/text() - get the text values of all author child elements
   class Selector
+    XPATH_SEGMENT_REGEX = /\A(\.\.?|\*|[a-zA-Z_][\w-]*|text\(\))(\|((\.\.?|\*|[a-zA-Z_][\w-]*|text\(\))))*\z/
+
     # Create a selector. Path should be an abbreviated XPath string.
     #
     # @param path [String] the XPath selector string
@@ -117,7 +119,7 @@ module XmlNodeStream
         i = segment_end
 
         # Validate segment format
-        unless segment.match?(/\A(\.\.?|\*|[a-zA-Z_][\w-]*|text\(\))(\|((\.\.?|\*|[a-zA-Z_][\w-]*|text\(\))))*\z/)
+        unless segment.match?(XPATH_SEGMENT_REGEX)
           raise ArgumentError, "Invalid XPath pattern: #{path} (invalid segment: #{segment})"
         end
 
