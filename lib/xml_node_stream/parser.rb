@@ -1,70 +1,95 @@
-require 'open-uri'
-require 'rubygems'
-require 'pathname'
-require File.expand_path(File.join(File.dirname(__FILE__), 'parser', 'base'))
+# frozen_string_literal: true
+
+require "net/http"
+require_relative "parser/base"
+require_relative "http_stream"
 
 module XmlNodeStream
   # The abstract parser class that wraps the actual parser implementation.
   class Parser
-
     SUPPORTED_PARSERS = [:nokogiri, :libxml, :rexml]
-    
+
+    @parser = :rexml
+
     class << self
       # Set the parser implementation. The parser argument should be one of :nokogiri, :libxml, or :rexml. If this method
       # is not called, it will default to :rexml which is the slowest choice possible. If you set the parser to one of the
       # other values, though, you'll need to make sure you have the nokogiri gem or libxml-ruby gem installed.
-      def parser_name= (parser)
-        parser_sym = parser.to_sym
+      #
+      # @param parser [Symbol, String] the parser name (:nokogiri, :libxml, or :rexml)
+      # @return [Symbol] the parser name
+      # @raise [ArgumentError] if parser is not one of the supported parsers
+      def parser_name=(parser)
+        parser_sym = parser&.to_sym
         raise ArgumentError.new("must be one of #{SUPPORTED_PARSERS.inspect}") unless SUPPORTED_PARSERS.include?(parser_sym)
+
         @parser_name = parser_sym
       end
-      
+
       # Get the name of the current parser.
+      #
+      # @return [Symbol] the current parser name
       def parser_name
         @parser_name ||= :rexml
       end
-      
+
       # Parse the document specified in io. This can be either a Stream, URI, Pathname, or String. If it is a String,
       # it can either be a XML document, file system path, or URI. The parser will figure it out. If a block is given,
       # it will be yielded to with each node as it is parsed.
-      def parse (io, &block)
-        close_stream = false
-        if io.is_a?(String)
-          if io.include?('<') and io.include?('>')
-            io = StringIO.new(io)
-          else
-            io = open(io)
+      #
+      # @param io [IO, String, URI, Pathname] the input source to parse
+      # @yield [Node] each node as it is parsed
+      # @return [Node] the root node of the parsed document
+      def parse(io, &block)
+        close_stream = true
+        io = URI.parse(io) if io.is_a?(String) && io.match?(%r{\Ahttp(s)?://})
+
+        if io.is_a?(String) && io.match?(/<[^>]+>/m)
+          io = StringIO.new(io)
+        elsif io.is_a?(String)
+          unless File.exist?(io)
+            raise ArgumentError.new("File not found: #{io}")
           end
-          close_stream = true
+          io = File.open(io, "r:UTF-8")
         elsif io.is_a?(Pathname)
-          io = io.open
-          close_stream = true
+          unless io.exist?
+            raise ArgumentError.new("File not found: #{io}")
+          end
+          io = io.open("r:UTF-8")
         elsif io.is_a?(URI)
-          io = io.open
-          close_stream = true
+          io = HttpStream.new(io)
+        else
+          close_stream = false
         end
 
         begin
           parser = parser_class(parser_name).new(&block)
           parser.parse_stream(io)
-          return parser.root
+          parser.root
         ensure
-          io.close if close_stream
+          if close_stream
+            begin
+              io.close
+            rescue
+              # Ignore errors during close to ensure cleanup completes
+              nil
+            end
+          end
         end
       end
-    
+
       protected
-      
-      def parser_class (class_symbol)
+
+      def parser_class(class_symbol)
         @loaded_parsers ||= {}
         klass = @loaded_parsers[class_symbol]
         unless klass
-          require File.expand_path(File.join(File.dirname(__FILE__), 'parser', "#{class_symbol}_parser"))
+          require File.expand_path(File.join(File.dirname(__FILE__), "parser", "#{class_symbol}_parser"))
           class_name = "#{class_symbol.to_s.capitalize}Parser"
           klass = const_get(class_name)
           @loaded_parsers[class_symbol] = klass
         end
-        return klass
+        klass
       end
     end
   end

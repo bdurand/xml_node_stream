@@ -1,11 +1,11 @@
-require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
+# frozen_string_literal: true
 
-describe XmlNodeStream do
-  
+require "spec_helper"
+
+RSpec.describe XmlNodeStream do
   it "should parse a document using the Parser.parse method" do
-    block = lambda{}
-    XmlNodeStream::Parser.should_receive(:parse).with("<xml/>", &block)
+    block = lambda { |node| true }
+    expect(XmlNodeStream::Parser).to receive(:parse).with("<xml/>", &block)
     XmlNodeStream.parse("<xml/>", &block)
   end
-  
 end

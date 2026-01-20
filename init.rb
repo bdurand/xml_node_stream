@@ -1,1 +1,0 @@
-require "#{File.dirname(__FILE__)}/lib/xml_node_stream"

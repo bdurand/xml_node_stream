@@ -1,140 +1,140 @@
-require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
+# frozen_string_literal: true
 
-describe XmlNodeStream::Node do
-  
+require "spec_helper"
+
+RSpec.describe XmlNodeStream::Node do
   it "should have a name" do
     node = XmlNodeStream::Node.new("tag")
-    node.name.should == "tag"
+    expect(node.name).to eq("tag")
   end
-  
+
   it "should have attributes" do
     node = XmlNodeStream::Node.new("tag")
-    node.attributes.should == {}
-    node["attr1"].should == nil
+    expect(node.attributes).to eq({})
+    expect(node["attr1"]).to be_nil
     node = XmlNodeStream::Node.new("tag", nil, "attr1" => "val1", "attr2" => "val2")
-    node.attributes.should == {"attr1" => "val1", "attr2" => "val2"}
-    node["attr1"].should == "val1"
+    expect(node.attributes).to eq("attr1" => "val1", "attr2" => "val2")
+    expect(node["attr1"]).to eq("val1")
   end
-  
+
   it "should have a value" do
     node = XmlNodeStream::Node.new("tag")
-    node.value.should == nil
+    expect(node.value).to be_nil
     node = XmlNodeStream::Node.new("tag", nil, nil, "value")
-    node.value.should == "value"
+    expect(node.value).to eq("value")
   end
-  
+
   it "should have a parent and children" do
     parent = XmlNodeStream::Node.new("tag")
-    parent.parent.should == nil
-    parent.children.should == []
+    expect(parent.parent).to be_nil
+    expect(parent.children).to eq([])
     child_1 = XmlNodeStream::Node.new("child", parent)
     child_2 = XmlNodeStream::Node.new("child")
     parent.add_child(child_2)
-    parent.children.should == [child_1, child_2]
-    child_1.parent.should == parent
-    child_2.parent.should == parent
+    expect(parent.children).to eq([child_1, child_2])
+    expect(child_1.parent).to eq(parent)
+    expect(child_2.parent).to eq(parent)
   end
-  
+
   it "should be able to remove children" do
     parent = XmlNodeStream::Node.new("tag")
     child_1 = XmlNodeStream::Node.new("child", parent)
     child_2 = XmlNodeStream::Node.new("child", parent)
-    parent.children.should == [child_1, child_2]
+    expect(parent.children).to eq([child_1, child_2])
     parent.remove_child(child_1)
-    parent.children.should == [child_2]
-    child_1.parent.should == nil
+    expect(parent.children).to eq([child_2])
+    expect(child_1.parent).to be_nil
   end
-  
+
   it "should release itself from its parent" do
     parent = XmlNodeStream::Node.new("tag")
     child_1 = XmlNodeStream::Node.new("child", parent)
     child_2 = XmlNodeStream::Node.new("child", parent)
-    parent.children.should == [child_1, child_2]
+    expect(parent.children).to eq([child_1, child_2])
     child_1.release!
-    parent.children.should == [child_2]
-    child_1.parent.should == nil
+    expect(parent.children).to eq([child_2])
+    expect(child_1.parent).to be_nil
   end
-  
+
   it "should have ancestors" do
     parent = XmlNodeStream::Node.new("tag")
     child = XmlNodeStream::Node.new("child", parent)
     grandchild = XmlNodeStream::Node.new("grandchild", child)
-    parent.ancestors.should == []
-    child.ancestors.should == [parent]
-    grandchild.ancestors.should == [child, parent]
+    expect(parent.ancestors).to eq([])
+    expect(child.ancestors).to eq([parent])
+    expect(grandchild.ancestors).to eq([child, parent])
   end
-  
+
   it "should have descendants" do
     parent = XmlNodeStream::Node.new("tag")
     child_1 = XmlNodeStream::Node.new("child", parent)
     child_2 = XmlNodeStream::Node.new("child", parent)
     grandchild_1 = XmlNodeStream::Node.new("grandchild", child_1)
     grandchild_2 = XmlNodeStream::Node.new("grandchild", child_1)
-    parent.descendants.should == [child_1, child_2, grandchild_1, grandchild_2]
-    child_1.descendants.should == [grandchild_1, grandchild_2]
-    grandchild_1.descendants.should == []
+    expect(parent.descendants).to eq([child_1, child_2, grandchild_1, grandchild_2])
+    expect(child_1.descendants).to eq([grandchild_1, grandchild_2])
+    expect(grandchild_1.descendants).to eq([])
   end
-  
+
   it "should have a root node" do
     parent = XmlNodeStream::Node.new("tag")
     child = XmlNodeStream::Node.new("child", parent)
     grandchild = XmlNodeStream::Node.new("grandchild", child)
-    parent.root.should == parent
-    child.root.should == parent
-    grandchild.root.should == parent
+    expect(parent.root).to eq(parent)
+    expect(child.root).to eq(parent)
+    expect(grandchild.root).to eq(parent)
   end
-  
+
   it "should have a path" do
     parent = XmlNodeStream::Node.new("tag")
     child = XmlNodeStream::Node.new("child", parent)
     grandchild = XmlNodeStream::Node.new("grandchild", child)
-    parent.path.should == "/tag"
-    child.path.should == "/tag/child"
-    grandchild.path.should == "/tag/child/grandchild"
+    expect(parent.path).to eq("/tag")
+    expect(child.path).to eq("/tag/child")
+    expect(grandchild.path).to eq("/tag/child/grandchild")
   end
-  
+
   it "should be able to select related nodes using a selector" do
     parent = XmlNodeStream::Node.new("tag")
     child_1 = XmlNodeStream::Node.new("child", parent)
     child_2 = XmlNodeStream::Node.new("child", parent)
     grandchild_1 = XmlNodeStream::Node.new("grandchild", child_1, nil, "val1")
     grandchild_2 = XmlNodeStream::Node.new("grandchild", child_1, nil, "val2")
-    parent.select("nothing").should == []
-    parent.select("child").should == [child_1, child_2]
-    parent.select("child/grandchild").should == [grandchild_1, grandchild_2]
-    parent.select("child/grandchild/text()").should == ["val1", "val2"]
-    grandchild_1.select("../..").should == [parent]
+    expect(parent.select("nothing")).to eq([])
+    expect(parent.select("child")).to eq([child_1, child_2])
+    expect(parent.select("child/grandchild")).to eq([grandchild_1, grandchild_2])
+    expect(parent.select("child/grandchild/text()")).to eq(["val1", "val2"])
+    expect(grandchild_1.select("../..")).to eq([parent])
   end
-  
+
   it "should be able to find the first related node using a selector" do
     parent = XmlNodeStream::Node.new("tag")
     child_1 = XmlNodeStream::Node.new("child", parent)
-    child_2 = XmlNodeStream::Node.new("child", parent)
+    XmlNodeStream::Node.new("child", parent)
     grandchild_1 = XmlNodeStream::Node.new("grandchild", child_1, nil, "val1")
-    grandchild_2 = XmlNodeStream::Node.new("grandchild", child_1, nil, "val2")
-    parent.find("nothing").should == nil
-    parent.find("child").should == child_1
-    parent.find("child/grandchild").should == grandchild_1
-    parent.find("child/grandchild/text()").should == "val1"
-    grandchild_1.find("../..").should == parent
+    XmlNodeStream::Node.new("grandchild", child_1, nil, "val2")
+    expect(parent.find("nothing")).to be_nil
+    expect(parent.find("child")).to eq(child_1)
+    expect(parent.find("child/grandchild")).to eq(grandchild_1)
+    expect(parent.find("child/grandchild/text()")).to eq("val1")
+    expect(grandchild_1.find("../..")).to eq(parent)
   end
-  
+
   it "should append text which strips whitespace from the start and end of the value" do
     node = XmlNodeStream::Node.new("tag")
     node.append("   ")
     node.append(" \t\r\nhello ")
     node.append(" there\n")
     node.finish!
-    node.value.should == "hello  there"
+    expect(node.value).to eq("hello  there")
   end
-  
+
   it "should append cdata which preserves all whitespace" do
     node = XmlNodeStream::Node.new("tag")
     node.append_cdata("   ")
     node.append(" \t\r\nhello ")
     node.append_cdata(" there\n")
     node.finish!
-    node.value.should == "    \t\r\nhello  there\n"
+    expect(node.value).to eq("    \t\r\nhello  there\n")
   end
-  
 end
