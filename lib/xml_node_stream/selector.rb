@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "set"
-
 module XmlNodeStream
   # Partial implementation of XPath selectors. Only abbreviated paths and the text() function are supported. The rest of XPath
   # is unecessary in the context of a Ruby application since XPath is also a programming language. If you really need an XPath
@@ -38,11 +36,10 @@ module XmlNodeStream
       matched = [node]
       @parts.each do |part_matchers|
         context = matched
-        context_set = context.to_set
         matched = []
 
         part_matchers.each do |matcher|
-          matched.concat(matcher.select(context, context_set))
+          matched.concat(matcher.select(context))
         end
 
         break if matched.empty?
@@ -66,15 +63,9 @@ module XmlNodeStream
       path_length = path.length
 
       while i < path_length
-        # Skip leading slash for absolute paths
-        if i == 0 && path[i] == "/"
-          parts << [Matcher.new("")]
-          i += 1
-          next
-        end
-
-        # Look for // (descendant operator)
+        # Look for // (descendant operator); a leading // searches from the document root
         if i < path_length - 1 && path[i] == "/" && path[i + 1] == "/"
+          parts << [Matcher.new("")] if i == 0
           i += 2
           # Check if there's a name after //
           name_match = path[i..].match(/\A([a-zA-Z_][\w-]*)/)
@@ -84,9 +75,20 @@ module XmlNodeStream
           elsif i >= path_length
             # // at end of path is invalid
             raise ArgumentError, "Invalid XPath pattern: #{path} (// cannot be at end)"
+          elsif path[i] == "*" && (i + 1 >= path_length || path[i + 1] == "/")
+            # //* selects all descendants
+            parts << [Matcher.new("%")]
+            i += 1
           else
             parts << [Matcher.new("%")]
           end
+          next
+        end
+
+        # Skip leading slash for absolute paths
+        if i == 0 && path[i] == "/"
+          parts << [Matcher.new("")]
+          i += 1
           next
         end
 
@@ -139,43 +141,40 @@ module XmlNodeStream
       # @param path [String] the path pattern to match
       def initialize(path)
         @path = path
+        @text = (path == "text()")
         @extractor = case path
         when "text()"
-          lambda { |node, context_set| node.value unless node.value.nil? || node.value.empty? }
+          lambda { |node| node.value unless node.value.nil? || node.value.empty? }
         when "%"
-          lambda { |node, context_set| node.descendants }
+          lambda { |node| node.descendants }
         when "*"
-          lambda { |node, context_set| node.children }
+          lambda { |node| node.children }
         when "."
-          lambda { |node, context_set| node }
+          lambda { |node| node }
         when ".."
-          lambda { |node, context_set| node.parent || [] }
+          lambda { |node| node.parent || [] }
         when ""
-          lambda { |node, context_set|
+          lambda { |node|
             root = Node.new(nil)
             root.children << node.root
             root
           }
         when /^%(.+)$/  # descendants with name filter: %name
           name = $1
-          lambda { |node, context_set| node.descendants.select { |d| d.name == name } }
+          lambda { |node| node.descendants.select { |d| d.name == name } }
         else
-          lambda { |node, context_set|
-            # Only return children matching the name
-            # Don't include children that are already in the context
-            node.children.select { |child| child.name == @path && !context_set&.include?(child) }
-          }
+          lambda { |node| node.children.select { |child| child.name == @path } }
         end
       end
 
       # Select all nodes that match a partial path.
       #
       # @param context_nodes [Array<Node>] the nodes to select from
-      # @param context_set [Set<Node>, nil] optional set version of context_nodes for performance
       # @return [Array<Node>] the matching nodes
-      def select(context_nodes, context_set = nil)
-        context_set ||= context_nodes.to_set
-        context_nodes.collect { |node| @extractor.call(node, context_set) if node.is_a?(Node) }.flatten.compact.uniq
+      def select(context_nodes)
+        results = context_nodes.collect { |node| @extractor.call(node) if node.is_a?(Node) }.flatten.compact
+        # Text values from different nodes can legitimately be equal, so only dedupe nodes.
+        @text ? results : results.uniq
       end
     end
   end

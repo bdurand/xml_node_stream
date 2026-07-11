@@ -9,6 +9,12 @@ RSpec.describe XmlNodeStream::Parser do
     validate_text_xml(XmlNodeStream::Parser.parse(File.read(text_xml_path)))
   end
 
+  it "should parse a document in a string without relying on other libraries to load stringio" do
+    lib_dir = File.expand_path(File.join(File.dirname(__FILE__), "..", "..", "lib"))
+    script = 'require "xml_node_stream"; exit(XmlNodeStream.parse("<a><b>x</b></a>").find("b/text()") == "x")'
+    expect(system(RbConfig.ruby, "-I", lib_dir, "-e", script)).to be true
+  end
+
   it "should parse a document in a file path string" do
     validate_text_xml(XmlNodeStream::Parser.parse(text_xml_path))
   end

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "pathname"
+require "stringio"
 require "uri"
 
 require_relative "xml_node_stream/node"

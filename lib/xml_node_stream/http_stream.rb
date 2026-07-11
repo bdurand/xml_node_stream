@@ -3,11 +3,26 @@
 require "net/http"
 
 module XmlNodeStream
+  # Error raised when an HTTP request returns an unsuccessful response.
+  class HttpError < StandardError
+    attr_reader :response
+
+    # @param message [String] the error message
+    # @param response [Net::HTTPResponse, nil] the HTTP response that caused the error
+    def initialize(message, response = nil)
+      super(message)
+      @response = response
+    end
+  end
+
   # IO-like wrapper for HTTP responses that allows streaming
   class HttpStream
     # Default timeout values in seconds
     DEFAULT_OPEN_TIMEOUT = 10
     DEFAULT_READ_TIMEOUT = 60
+
+    # Maximum number of redirects to follow
+    MAX_REDIRECTS = 5
 
     # Create a new HttpStream.
     #
@@ -16,15 +31,13 @@ module XmlNodeStream
     # @param read_timeout [Integer] read timeout in seconds (default 60)
     def initialize(uri, open_timeout: DEFAULT_OPEN_TIMEOUT, read_timeout: DEFAULT_READ_TIMEOUT)
       @uri = uri
-      @http = Net::HTTP.new(uri.host, uri.port)
-      @http.use_ssl = (uri.scheme == "https")
-      @http.open_timeout = open_timeout
-      @http.read_timeout = read_timeout
-      @request = Net::HTTP::Get.new(uri.request_uri)
+      @open_timeout = open_timeout
+      @read_timeout = read_timeout
+      @http = nil
       @buffer = +""
       @eof = false
       @response = nil
-      @body_reader = nil
+      @fiber = nil
     end
 
     # Read data from the stream.
@@ -108,7 +121,7 @@ module XmlNodeStream
       return nil if @buffer.empty?
 
       line = @buffer
-      @buffer = ""
+      @buffer = +""
       line
     end
 
@@ -148,32 +161,67 @@ module XmlNodeStream
     private
 
     def ensure_response_started
-      return if @response
+      return if @fiber
 
-      @http.start unless @http.started?
-      @response = @http.request(@request)
-      @body_reader = @response.read_body
+      # The request runs inside a fiber so that the response body can be consumed incrementally.
+      # Net::HTTP#request with a block streams the body via read_body; each chunk is yielded out
+      # of the fiber and pulled on demand by read_chunk without buffering the whole response.
+      @fiber = Fiber.new do
+        uri = @uri
+        redirects = 0
+
+        loop do
+          connect(uri)
+          request = Net::HTTP::Get.new(uri.request_uri)
+          redirect_location = nil
+
+          @http.request(request) do |response|
+            @response = response
+
+            case response
+            when Net::HTTPRedirection
+              redirects += 1
+              if redirects > MAX_REDIRECTS
+                raise HttpError.new("Too many redirects requesting #{@uri}", response)
+              end
+              redirect_location = response["Location"]
+              unless redirect_location
+                raise HttpError.new("Redirect without Location header from #{uri}", response)
+              end
+            when Net::HTTPSuccess
+              response.read_body do |chunk|
+                Fiber.yield(chunk) unless chunk.empty?
+              end
+            else
+              raise HttpError.new("HTTP error #{response.code} requesting #{uri}", response)
+            end
+          end
+
+          break unless redirect_location
+
+          uri = URI.join(uri.to_s, redirect_location)
+        end
+
+        nil
+      end
+    end
+
+    def connect(uri)
+      close
+
+      @http = Net::HTTP.new(uri.host, uri.port)
+      @http.use_ssl = (uri.scheme == "https")
+      @http.open_timeout = @open_timeout
+      @http.read_timeout = @read_timeout
+      @http.start
     end
 
     def read_chunk
       return nil if @eof
 
-      if @body_reader.is_a?(String)
-        # Entire body was read at once
-        if @body_reader.empty?
-          @eof = true
-          return nil
-        end
-        # Simulate chunking for consistency
-        chunk = @body_reader.byteslice(0, 8192) || +""
-        @body_reader = @body_reader.byteslice(8192..-1) || +""
-        @eof = true if @body_reader.empty?
-        chunk
-      else
-        # Should not happen with webmock but handling for real HTTP
-        @eof = true
-        nil
-      end
+      chunk = (@fiber.alive? ? @fiber.resume : nil)
+      @eof = true if chunk.nil?
+      chunk
     end
   end
 end

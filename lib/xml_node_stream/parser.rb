@@ -9,8 +9,6 @@ module XmlNodeStream
   class Parser
     SUPPORTED_PARSERS = [:nokogiri, :libxml, :rexml]
 
-    @parser = :rexml
-
     class << self
       # Set the parser implementation. The parser argument should be one of :nokogiri, :libxml, or :rexml. If this method
       # is not called, it will default to :rexml which is the slowest choice possible. If you set the parser to one of the
