@@ -21,11 +21,11 @@ jobs:
           - ruby: "ruby"
             yard: true
             standardrb: true
-          - ruby: "3.0"
+          - ruby: "2.7"
             appraisal: "rexml_3"
-          - ruby: "3.0"
+          - ruby: "2.7"
             appraisal: "nokogiri_1"
-          - ruby: "3.0"
+          - ruby: "2.7"
             appraisal: "libxml_3"
     steps:
       - name: Checkout

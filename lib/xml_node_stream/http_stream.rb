@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "net/http"
+require "fiber"
 
 module XmlNodeStream
   # Error raised when an HTTP request returns an unsuccessful response.
