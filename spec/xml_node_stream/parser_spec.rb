@@ -94,7 +94,7 @@ RSpec.describe XmlNodeStream::Parser do
       it "should parse a document" do
         validate_text_xml(XmlNodeStream::Parser.parse(text_xml_path))
       rescue NotImplementedError
-        pending("#{parser_name} is not installed for testing")
+        skip("#{parser_name} is not installed for testing")
       end
     end
   end

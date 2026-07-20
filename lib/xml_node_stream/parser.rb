@@ -82,7 +82,7 @@ module XmlNodeStream
         @loaded_parsers ||= {}
         klass = @loaded_parsers[class_symbol]
         unless klass
-          require File.expand_path(File.join(File.dirname(__FILE__), "parser", "#{class_symbol}_parser"))
+          require_relative "parser/#{class_symbol}_parser"
           class_name = "#{class_symbol.to_s.capitalize}Parser"
           klass = const_get(class_name)
           @loaded_parsers[class_symbol] = klass
