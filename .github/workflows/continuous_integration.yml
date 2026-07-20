@@ -21,7 +21,12 @@ jobs:
           - ruby: "ruby"
             yard: true
             standardrb: true
-          - ruby: "2.7"
+          - ruby: "3.0"
+            appraisal: "rexml_3"
+          - ruby: "3.0"
+            appraisal: "nokogiri_1"
+          - ruby: "3.0"
+            appraisal: "libxml_3"
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
