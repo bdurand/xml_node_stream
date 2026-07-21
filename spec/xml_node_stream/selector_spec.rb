@@ -29,6 +29,22 @@ RSpec.describe XmlNodeStream::Selector do
     expect(selector.find(child_2)).to eq([grandchild_3, grandchild_4])
   end
 
+  it "should find descendant nodes from the document root with a leading //" do
+    selector = XmlNodeStream::Selector.new("//grandchild")
+    expect(selector.find(root)).to eq([grandchild_1, grandchild_2, great_grandchild, grandchild_3, grandchild_4])
+    expect(selector.find(grandchild_3)).to eq([grandchild_1, grandchild_2, great_grandchild, grandchild_3, grandchild_4])
+  end
+
+  it "should find nested nodes with the same name" do
+    selector = XmlNodeStream::Selector.new(".//grandchild/grandchild")
+    expect(selector.find(root)).to eq([great_grandchild])
+  end
+
+  it "should find all descendants with //*" do
+    selector = XmlNodeStream::Selector.new("child//*")
+    expect(selector.find(root)).to eq([grandchild_1, grandchild_2, great_grandchild, grandchild_3, grandchild_4])
+  end
+
   it "should find child nodes in a specified hierarchy" do
     selector = XmlNodeStream::Selector.new("child/grandchild")
     expect(selector.find(root)).to eq([grandchild_1, grandchild_2, grandchild_3, grandchild_4])
@@ -54,6 +70,15 @@ RSpec.describe XmlNodeStream::Selector do
     expect(selector.find(grandchild_1)).to eq(["val1"])
     selector = XmlNodeStream::Selector.new("child/grandchild/text()")
     expect(selector.find(root)).to eq(["val1", "val2", "val3", "val4"])
+  end
+
+  it "should not remove duplicate text values from different nodes" do
+    parent = XmlNodeStream::Node.new("parent")
+    XmlNodeStream::Node.new("item", parent, nil, "same")
+    XmlNodeStream::Node.new("item", parent, nil, "same")
+    XmlNodeStream::Node.new("item", parent, nil, "different")
+    selector = XmlNodeStream::Selector.new("item/text()")
+    expect(selector.find(parent)).to eq(["same", "same", "different"])
   end
 
   it "should allow wildcards in the hierarchy" do

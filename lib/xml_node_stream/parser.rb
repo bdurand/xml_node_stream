@@ -9,8 +9,6 @@ module XmlNodeStream
   class Parser
     SUPPORTED_PARSERS = [:nokogiri, :libxml, :rexml]
 
-    @parser = :rexml
-
     class << self
       # Set the parser implementation. The parser argument should be one of :nokogiri, :libxml, or :rexml. If this method
       # is not called, it will default to :rexml which is the slowest choice possible. If you set the parser to one of the
@@ -84,7 +82,7 @@ module XmlNodeStream
         @loaded_parsers ||= {}
         klass = @loaded_parsers[class_symbol]
         unless klass
-          require File.expand_path(File.join(File.dirname(__FILE__), "parser", "#{class_symbol}_parser"))
+          require_relative "parser/#{class_symbol}_parser"
           class_name = "#{class_symbol.to_s.capitalize}Parser"
           klass = const_get(class_name)
           @loaded_parsers[class_symbol] = klass

@@ -209,13 +209,53 @@ RSpec.describe XmlNodeStream::HttpStream do
       expect { stream.read }.to raise_error(Timeout::Error)
     end
 
-    it "should handle HTTP errors" do
+    it "should raise an error for HTTP error responses" do
       stub_request(:get, url).to_return(status: 404, body: "Not Found")
+
+      stream = XmlNodeStream::HttpStream.new(uri)
+
+      expect { stream.read }.to raise_error(XmlNodeStream::HttpError, /404/) do |error|
+        expect(error.response.code).to eq("404")
+      end
+    end
+  end
+
+  describe "redirects" do
+    it "should follow redirects" do
+      redirect_url = "http://example.com/redirected.xml"
+      stub_request(:get, url).to_return(status: 302, headers: {"Location" => redirect_url})
+      stub_request(:get, redirect_url).to_return(body: xml_content)
 
       stream = XmlNodeStream::HttpStream.new(uri)
       content = stream.read
 
-      expect(content).to eq("Not Found")
+      expect(content).to eq(xml_content)
+    end
+
+    it "should follow relative redirects" do
+      stub_request(:get, url).to_return(status: 301, headers: {"Location" => "/moved.xml"})
+      stub_request(:get, "http://example.com/moved.xml").to_return(body: xml_content)
+
+      stream = XmlNodeStream::HttpStream.new(uri)
+      content = stream.read
+
+      expect(content).to eq(xml_content)
+    end
+
+    it "should raise an error when there are too many redirects" do
+      stub_request(:get, url).to_return(status: 302, headers: {"Location" => url})
+
+      stream = XmlNodeStream::HttpStream.new(uri)
+
+      expect { stream.read }.to raise_error(XmlNodeStream::HttpError, /Too many redirects/)
+    end
+
+    it "should raise an error when a redirect has no location" do
+      stub_request(:get, url).to_return(status: 302)
+
+      stream = XmlNodeStream::HttpStream.new(uri)
+
+      expect { stream.read }.to raise_error(XmlNodeStream::HttpError, /without Location/)
     end
   end
 end
